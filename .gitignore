@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+*.sqlite3
+*.db
+media/
+staticfiles/
+
+# If you're using a .env file to store secrets
+.env
+.env.*
+
+# VS Code settings
+.vscode/
+
+# macOS specific
+.DS_Store
+
+# pipenv / poetry / virtualenv
+Pipfile.lock
+poetry.lock
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+ENV/
+
+# Migrations - optional to ignore
+# Uncomment below to ignore migrations (useful in dev team setting)
+# */migrations/*.py
+# */migrations/*.pyc
+
+# Pytest
+htmlcov/
+.coverage
+.tox/
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
