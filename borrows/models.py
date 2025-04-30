@@ -10,6 +10,7 @@ class Borrow(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     book_id = models.ForeignKey(Book, on_delete=models.CASCADE)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_returned = models.BooleanField(default=False)
     borrowed_at = models.DateTimeField(default=timezone.now)
     to_return_at = models.DateTimeField()
 
