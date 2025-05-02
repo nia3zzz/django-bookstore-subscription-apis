@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, UUID4
 
 
 class create_user_validator(BaseModel):
@@ -7,3 +7,7 @@ class create_user_validator(BaseModel):
     phone_number: str = Field(max_length=14)
     password: str = Field(min_length=6)
     membership_paid: bool
+
+
+class update_membership_validator(BaseModel):
+    id: UUID4

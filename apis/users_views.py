@@ -12,23 +12,33 @@ def create_user(request):
     try:
         # validate req data
         validate_data = user_validators.create_user_validator(**request.data)
+    except ValidationError as e:
+        return Response(
+            {
+                "status": "error",
+                "message": "Failed in type validation",
+                "errors": e.errors(),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
         # check duplicate values exists
-        if User.objects.filter(email=validate_data.email).exists():
-            return Response(
-                {"status": "error", "message": "User with this email already exists."},
-                status=status.HTTP_409_CONFLICT,
-            )
+    if User.objects.filter(email=validate_data.email).exists():
+        return Response(
+            {"status": "error", "message": "User with this email already exists."},
+            status=status.HTTP_409_CONFLICT,
+        )
 
-        if User.objects.filter(phone_number=validate_data.phone_number).exists():
-            return Response(
-                {
-                    "status": "error",
-                    "message": "User with this phone number already exists.",
-                },
-                status=status.HTTP_409_CONFLICT,
-            )
+    if User.objects.filter(phone_number=validate_data.phone_number).exists():
+        return Response(
+            {
+                "status": "error",
+                "message": "User with this phone number already exists.",
+            },
+            status=status.HTTP_409_CONFLICT,
+        )
 
+    try:
         # password hashing
         bytes = validate_data.password.encode("utf-8")
         salt = bcrypt.gensalt()
@@ -45,17 +55,58 @@ def create_user(request):
 
         return Response(
             {"status": "success", "message": "User has been created"},
-            status=status.HTTP_200_OK,
+            status=status.HTTP_201_CREATED,
         )
 
+    except Exception as e:
+        return Response(
+            {
+                "status": "error",
+                "message": "Internal server error.",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["PUT"])
+def update_membership(request, id):
+    try:
+        # validate req id
+        validate_data = user_validators.update_membership_validator(id=id)
     except ValidationError as e:
         return Response(
             {
                 "status": "error",
-                "message": "Failed in type validation",
+                "message": "Failed in type validation.",
                 "errors": e.errors(),
             },
             status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        # find the user
+        found_user = User.objects.get(id=validate_data.id)
+    except User.DoesNotExist:
+        return Response(
+            {"status": "error", "message": "No user has been found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # if the membership is already paid
+    if found_user.membership_paid == True:
+        return Response(
+            {"status": "error", "message": "Membership is already paid."},
+            status=status.HTTP_409_CONFLICT,
+        )
+
+    try:
+        # update the user
+        found_user.membership_paid = True
+        found_user.save()
+
+        return Response(
+            {"status": "success", "message": "User has been updated."},
+            status=status.HTTP_200_OK,
         )
     except Exception as e:
         return Response(
