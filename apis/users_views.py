@@ -5,6 +5,7 @@ from pydantic import ValidationError
 from rest_framework import status
 from users.models import User
 import bcrypt
+from .serializers import user_serializers
 
 
 @api_view(["POST"])
@@ -114,5 +115,97 @@ def update_membership(request, id):
                 "status": "error",
                 "message": "Internal server error.",
             },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["GET"])
+def get_users(request):
+    try:
+        # validate queries
+        filter_by_raw_query = request.query_params.get("filter_by")
+        limit_raw_query = request.query_params.get("limit")
+        offset_raw_query = request.query_params.get("offset")
+
+        validate_query = user_validators.get_users(
+            filter_by_raw_query=filter_by_raw_query,
+            limit_raw_query=limit_raw_query,
+            offset_raw_query=offset_raw_query,
+        )
+
+    except ValidationError as e:
+        return Response(
+            {
+                "status": "error",
+                "message": "Failed in type validation.",
+                "errors": e.errors(),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        # get data based on query and return data
+        if validate_query.filter_by == "first_to_add":
+            user_data = User.objects.all().order_by("created_at")[
+                validate_query.offset : validate_query.offset + validate_query.limit
+            ]
+            serialized_user_data = user_serializers.UserSerializer(user_data)
+
+            return Response(
+                {
+                    "status": "success",
+                    "message": "User data has been fetched.",
+                    "data": serialized_user_data.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        # get data based on query and return data
+        elif validate_query.filter_by == "last_to_add":
+            user_data = User.objects.all().order_by("-created_at")[
+                validate_query.offset : validate_query.offset + validate_query.limit
+            ]
+            serialized_user_data = user_serializers.UserSerializer(user_data)
+
+            return Response(
+                {
+                    "status": "success",
+                    "message": "User data has been fetched.",
+                    "data": serialized_user_data.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        # get data based on query and return data
+        elif validate_query.filter_by == "unpaid_member":
+            user_data = User.objects.filter(membership_paid=False)[
+                validate_query.offset : validate_query.offset + validate_query.limit
+            ]
+            serialized_user_data = user_serializers.UserSerializer(user_data)
+
+            return Response(
+                {
+                    "status": "success",
+                    "message": "User data has been fetched.",
+                    "data": serialized_user_data.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        # get data based if no query and return data
+        user_data = User.objects.all()[
+            validate_query.offset : validate_query.offset + validate_query.limit
+        ]
+        serialized_user_data = user_serializers.UserSerializer(user_data, many=True)
+        return Response(
+            {
+                "status": "success",
+                "message": "User data has been fetched.",
+                "data": serialized_user_data.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+    except Exception as e:
+        return Response(
+            {"status": "error", "message": "Internal server error."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
