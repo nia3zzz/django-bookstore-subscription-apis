@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, UUID4
+from pydantic import BaseModel, EmailStr, Field, UUID4, model_validator
 from enum import Enum
 from typing import Optional
 
@@ -25,3 +25,9 @@ class get_users(BaseModel):
     filter_by: Optional[FilterEnum] = Field(default=None)
     limit: int = Field(default=10)
     offset: int = Field(default=0)
+
+
+class UpdateUser(BaseModel):
+    name: str = Field(min_length=3, max_length=50)
+    email: EmailStr
+    phone_number: str = Field(max_length=14)

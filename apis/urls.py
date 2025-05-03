@@ -9,4 +9,6 @@ urlpatterns = [
     path("users/membership/<uuid:id>", users_views.update_membership),
     # get a list of users
     path("users/q", users_views.get_users),
+    # user action using an id
+    path("users/<uuid:id>", users_views.user_actions),
 ]
