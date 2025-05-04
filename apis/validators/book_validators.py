@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from enum import Enum
+from typing import Optional
 
 
 class BookCategory(str, Enum):
@@ -51,3 +52,10 @@ class create_book_validator(BaseModel):
     author_name: str = Field(max_length=50)
     category: BookCategory
     quantity: int = Field(default=1)
+
+
+class get_books_query_validators(BaseModel):
+    category: Optional[BookCategory] = Field(default=None)
+    author_name: Optional[str] = Field(default=None)
+    limit: Optional[int] = Field(default=10)
+    offset: Optional[int] = Field(default=0)

@@ -14,4 +14,6 @@ urlpatterns = [
     # books urls
     # create book
     path("books", books_views.create_book),
+    # get a list of books through query filtering
+    path("books/q", books_views.get_books),
 ]

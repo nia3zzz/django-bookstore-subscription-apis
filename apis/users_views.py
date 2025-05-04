@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from rest_framework import status
 from users.models import User
 import bcrypt
-from .serializers import user_serializers
+from .serializers import serializers
 from borrows.models import Borrow
 
 
@@ -149,7 +149,7 @@ def get_users(request):
             user_data = User.objects.all().order_by("created_at")[
                 validate_query.offset : validate_query.offset + validate_query.limit
             ]
-            serialized_user_data = user_serializers.UserSerializer(user_data)
+            serialized_user_data = serializers.UserSerializer(user_data)
 
             return Response(
                 {
@@ -165,7 +165,7 @@ def get_users(request):
             user_data = User.objects.all().order_by("-created_at")[
                 validate_query.offset : validate_query.offset + validate_query.limit
             ]
-            serialized_user_data = user_serializers.UserSerializer(user_data)
+            serialized_user_data = serializers.UserSerializer(user_data)
 
             return Response(
                 {
@@ -181,7 +181,7 @@ def get_users(request):
             user_data = User.objects.filter(membership_paid=False)[
                 validate_query.offset : validate_query.offset + validate_query.limit
             ]
-            serialized_user_data = user_serializers.UserSerializer(user_data)
+            serialized_user_data = serializers.UserSerializer(user_data)
 
             return Response(
                 {
@@ -196,7 +196,7 @@ def get_users(request):
         user_data = User.objects.all()[
             validate_query.offset : validate_query.offset + validate_query.limit
         ]
-        serialized_user_data = user_serializers.UserSerializer(user_data, many=True)
+        serialized_user_data = serializers.UserSerializer(user_data, many=True)
         return Response(
             {
                 "status": "success",
@@ -240,7 +240,7 @@ def user_actions(request, id):
     if request.method == "GET":
         try:
             # serialize and then send the data
-            serialized_data = user_serializers.UserSerializer(found_user)
+            serialized_data = serializers.UserSerializer(found_user)
 
             return Response(
                 {
