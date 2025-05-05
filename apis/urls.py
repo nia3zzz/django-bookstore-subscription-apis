@@ -16,4 +16,6 @@ urlpatterns = [
     path("books", books_views.create_book),
     # get a list of books through query filtering
     path("books/q", books_views.get_books),
+    # books actions by id
+    path("books/<uuid:id>", books_views.books_actions),
 ]

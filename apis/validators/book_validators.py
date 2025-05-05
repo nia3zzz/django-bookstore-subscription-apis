@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, UUID4
 from enum import Enum
 from typing import Optional
 
@@ -59,3 +59,11 @@ class get_books_query_validators(BaseModel):
     author_name: Optional[str] = Field(default=None)
     limit: Optional[int] = Field(default=10)
     offset: Optional[int] = Field(default=0)
+
+
+class books_actions_validators(BaseModel):
+    id: UUID4
+
+
+class update_book_by_id(BaseModel):
+    quantity: int = Field(ge=1)

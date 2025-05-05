@@ -5,6 +5,7 @@ from rest_framework import status
 from .validators import book_validators
 from books.models import Book
 from .serializers.serializers import BookSerializer
+from borrows.models import Borrow
 
 
 @api_view(["POST"])
@@ -106,3 +107,105 @@ def get_books(request):
             {"status": "error", "message": "Internal server error"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@api_view(["GET", "PUT", "DELETE"])
+def books_actions(request, id):
+    try:
+        # validate the param
+        validate_data = book_validators.books_actions_validators(id=id)
+    except ValidationError as e:
+        return Response(
+            {
+                "status": "error",
+                "message": "Failed in type validation.",
+                "errors": e.errors(),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    try:
+        # check if book exists
+        found_book = Book.objects.get(id=validate_data.id)
+    except Book.DoesNotExist:
+        return Response(
+            {"status": "error", "message": "No books were found with this id."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    if request.method == "GET":
+        try:
+            # serialize the data and send back to user
+            serialized_book_data = BookSerializer(found_book)
+            return Response(
+                {
+                    "status": "success",
+                    "message": "Book data has been fetched.",
+                    "data": serialized_book_data.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception:
+            return Response(
+                {"status": "error", "message": "Internal server error."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    elif request.method == "PUT":
+        # validate quantity
+        try:
+            validate_data_update = book_validators.update_book_by_id(**request.data)
+        except ValidationError as e:
+            return Response(
+                {
+                    "status": "error",
+                    "message": "Failed in type validation.",
+                    "errors": e.errors(),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # if the quantity is the same
+        if found_book.quantity == validate_data_update.quantity:
+            return Response(
+                {"status": "error", "message": "No changes found in the quantity."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        try:
+            # update the books
+            found_book.quantity = validate_data_update.quantity
+            found_book.save()
+
+            return Response(
+                {"status": "success", "message": "Book has been updated."},
+                status=status.HTTP_200_OK,
+            )
+        except Exception:
+            return Response(
+                {"status": "error", "message": "Internal server error."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    elif request.method == "DELETE":
+        # check if the books has some borrowed books
+        found_borrows_by_book = Borrow.objects.filter(book_id=found_book.id)
+        if len(found_borrows_by_book) > 0:
+            return Response(
+                {
+                    "status": "error",
+                    "message": f"Books has borrowed {len(found_borrows_by_book)} times.",
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        try:
+            # delete the book
+            Book.objects.filter(id=found_book.id).delete()
+
+            return Response(
+                {"status": "success", "message": "Book has been deleted."},
+                status=status.HTTP_200_OK,
+            )
+        except Exception:
+            return Response(
+                {"status": "error", "message": "Internal server error."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
