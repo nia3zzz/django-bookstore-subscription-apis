@@ -18,4 +18,7 @@ urlpatterns = [
     path("books/q", books_views.get_books),
     # books actions by id
     path("books/<uuid:id>", books_views.books_actions),
+    # borrow url
+    # route for creating a borrow
+    path("borrow", borrows_views.create_borrow),
 ]
