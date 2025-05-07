@@ -15,4 +15,4 @@ class Borrow(models.Model):
     to_return_at = models.DateTimeField()
 
     def __str__(self):
-        return self.to_return_at
+        return self.to_return_at.isoformat()

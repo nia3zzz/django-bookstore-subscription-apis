@@ -6,6 +6,8 @@ from .validators import borrow_validators
 from borrows.models import Borrow
 from books.models import Book
 from users.models import User
+from .serializers.serializers import BorrowSerializer
+from datetime import datetime
 
 
 @api_view(["POST"])
@@ -53,7 +55,7 @@ def create_borrow(request):
         Borrow.objects.create(
             user_id=found_user,
             book_id=found_book,
-            to_return_at=validate_data.to_return_at,
+            to_return_at=validate_data.to_return_at.isoformat(),
         )
 
         # change the quantity of books available
@@ -64,7 +66,71 @@ def create_borrow(request):
             {"status": "success", "message": "Borrow has been created."},
             status=status.HTTP_200_OK,
         )
-    except Exception as e:
+    except Exception:
+        return Response(
+            {"status": "error", "message": "Internal server error."},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["GET"])
+def get_borrows(request):
+    try:
+        # validate the queries
+        book_id_raw_query = request.query_params.get("book_id")
+        user_id_raw_query = request.query_params.get("user_id")
+        is_returned_raw_query = request.query_params.get("is_returned")
+        limit_raw_query = request.query_params.get("limit") or 10
+        offset_raw_query = request.query_params.get("offset") or 0
+
+        validate_query = borrow_validators.get_borrows_validator(
+            book_id=book_id_raw_query,
+            user_id=user_id_raw_query,
+            is_returned=is_returned_raw_query,
+            limit=limit_raw_query,
+            offset=offset_raw_query,
+        )
+    except ValidationError as e:
+        return Response(
+            {
+                "status": "error",
+                "message": "Failed in type validation.",
+                "data": e.errors(),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        # get the data serialize and then return to the client
+        filters = {}
+
+        if validate_query.book_id is not None:
+            filters["book_id"] = validate_query.book_id
+
+        if validate_query.user_id is not None:
+            filters["user_id"] = validate_query.user_id
+
+        if (
+            validate_query.is_returned is not None
+            and validate_query.is_returned == True
+        ):
+            filters["is_returned"] = validate_query.is_returned
+
+        found_borrows = Borrow.objects.filter(**filters)[
+            validate_query.offset : validate_query.offset + validate_query.limit
+        ]
+
+        serialized_borrow_data = BorrowSerializer(found_borrows, many=True)
+
+        return Response(
+            {
+                "status": "success",
+                "message": "Borrow data has been fetched.",
+                "data": serialized_borrow_data.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+    except Exception:
         return Response(
             {"status": "error", "message": "Internal server error."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
