@@ -22,5 +22,7 @@ urlpatterns = [
     # route for creating a borrow
     path("borrows", borrows_views.create_borrow),
     # get a list of borrows based on queries
-    path("borrows/q", borrows_views.get_borrows)
+    path("borrows/q", borrows_views.get_borrows),
+    # boorrow actions using the id url parameter
+    path("borrows/<uuid:id>", borrows_views.borrow_actions),
 ]

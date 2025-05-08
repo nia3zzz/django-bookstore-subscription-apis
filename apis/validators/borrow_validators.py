@@ -13,3 +13,6 @@ class get_borrows_validator(BaseModel):
     is_returned: Optional[bool] = Field(default=None)
     limit: Optional[int] = Field(default=10)
     offset: Optional[int] = Field(default=0)
+
+class borrow_actions_validators(BaseModel):
+    id: UUID4

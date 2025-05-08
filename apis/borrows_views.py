@@ -135,3 +135,96 @@ def get_borrows(request):
             {"status": "error", "message": "Internal server error."},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@api_view(["GET", "PUT", "DELETE"])
+def borrow_actions(request, id):
+    try:
+        # validate the url parameter id
+        validate_data = borrow_validators.borrow_actions_validators(id=id)
+    except ValidationError as e:
+        return Response(
+            {
+                "status": "error",
+                "message": "Failed in type validation.",
+                "errors": e.errors(),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        found_borrow = Borrow.objects.get(id=validate_data.id)
+    except Borrow.DoesNotExist():
+        return Response(
+            {"status": "error", "message": "No borrow found with the id provided."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if request.method == "GET":
+        # if the request is a get method serialize data and then send back to the user
+        try:
+            serialized_found_borrow = BorrowSerializer(found_borrow)
+
+            return Response(
+                {
+                    "status": "success",
+                    "message": "Borrow data has been fetched.",
+                    "data": serialized_found_borrow.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            print(e)
+            return Response(
+                {"status": "error", "message": "Internal server error."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    elif request.method == "PUT":
+        try:
+            # update to true if its none type and set to none if set to true
+            if found_borrow.is_returned == False:
+                found_borrow.is_returned = True
+                found_borrow.save()
+
+                return Response(
+                    {
+                        "status": "success",
+                        "message": "Borrowed book has been returned.",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            elif found_borrow.is_returned == True:
+                found_borrow.is_returned = False
+                found_borrow.save()
+
+                return Response(
+                    {
+                        "status": "success",
+                        "message": "Borrowed book has not been returned.",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {"status": "error", "message": "Internal server error."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+        except Exception:
+            return Response(
+                {"status": "error", "message": "Internal server error."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    elif request.method == "DELETE":
+        # delete the found borrow
+        try:
+            found_borrow.delete()
+
+            return Response(
+                {"status": "success", "message": "Borrow has been returned."},
+                status=status.HTTP_200_OK,
+            )
+        except Exception:
+            return Response(
+                {"status": "error", "message": "Internal server error."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
